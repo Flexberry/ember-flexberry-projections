@@ -577,6 +577,163 @@ export default DS.RESTAdapter.extend({
   },
 
   /**
+    A method to get array of models with batch request.
+
+    @method batchSelect
+    @param {DS.Store} store The store.
+    @param {Array} queries Array of Flexberry Query objects.
+    @return {Promise} A promise that fulfilled with an array of query responses.
+  */
+  batchSelect(store, queries) {
+    if (Ember.isNone(store)) {
+      store = this.get('store');
+    }
+
+    const boundary = `batch_${generateUniqueId()}`;
+    let requestBody = '';
+    queries.forEach(query => {
+      requestBody += `--${boundary}\r\n`;
+      requestBody += 'Content-Type: application/http\r\n';
+      requestBody += 'Content-Transfer-Encoding: binary\r\n';
+
+      const getUrl = this._buildURL(query.modelName);
+
+      const queryAdapter = new ODataQueryAdapter(getUrl, store);
+      const fullUrl = queryAdapter.getODataFullUrl(query);
+
+      requestBody += '\r\nGET ' + fullUrl + ' HTTP/1.1\r\n';
+      requestBody += 'Content-Type: application/json;type=entry\r\n';
+      requestBody += 'Prefer: return=representation\r\n\r\n';
+    });
+
+    const url = `${this._buildURL()}/$batch`;
+
+    const headers = Ember.$.extend({}, this.get('headers'));
+    headers['Content-Type'] = `multipart/mixed;boundary=${boundary}`;
+    const httpMethod = 'POST';
+
+    const options = {
+      method: httpMethod,
+      headers,
+      dataType: 'text',
+      data: requestBody
+    };
+
+    return new Ember.RSVP.Promise((resolve, reject) => Ember.$.ajax(url, options).done((response, statusText, xhr) => {
+      const meta = getResponseMeta(xhr.getResponseHeader('Content-Type'));
+      if (meta.contentType !== 'multipart/mixed') {
+        return reject(new DS.AdapterError('Invalid response type.'));
+      }
+
+      const batchResponses = getBatchResponses(response, meta.boundary).map(parseBatchResponse);
+      const getResponses = batchResponses.filter(r => r.contentType === 'application/http');
+
+      const errorsChangesets = getResponses.filter(c => !this.isSuccess(c.response.meta.status));
+      if (errorsChangesets.length) {
+        return reject(errorsChangesets.map(c => new DS.AdapterError(c.body)));
+      }
+
+      const result = Ember.A();
+
+      getResponses.forEach((response, index) => {
+        const getResponse = response.response;
+        const type = queries[index].modelName;
+        const requestResult = { data: Ember.A(), included: Ember.A(), meta: store.serializerFor(type).extractMeta(store, type, getResponse.body) };
+        const records = getResponse.body.value;
+        records.forEach(record => {
+          const normalized = store.normalize(type, record);
+
+          // eslint-disable-next-line ember/jquery-ember-run
+          requestResult.data.addObject(normalized.data);
+          if (normalized.included) {
+            requestResult.included.addObjects(normalized.included);
+          }
+        });
+
+        result.addObject(requestResult);
+      });
+
+      return resolve(result);
+    }).fail(reject));
+  },
+
+  /**
+    A method to get single record with batch request.
+
+    @method batchFindRecord
+    @param {DS.Store} store The store.
+    @param {String} modelName Model name.
+    @param {String} modelId Record id.
+    @param {String} projectionName Projection name.
+    @return {Promise} A promise that fulfilled with single record.
+  */
+  batchFindRecord(store, modelName, modelId, projectionName) {
+    if (Ember.isNone(modelName) || Ember.isNone(projectionName) || Ember.isNone(modelId)) {
+      return Ember.RSVP.reject();
+    }
+
+    if (Ember.isNone(store)) {
+      store = this.get('store');
+    }
+
+    const boundary = `batch_${generateUniqueId()}`;
+    let requestBody = `--${boundary}\r\n`;
+
+    requestBody += 'Content-Type: application/http\r\n';
+    requestBody += 'Content-Transfer-Encoding: binary\r\n';
+
+    const getUrl = this._buildURL(modelName, modelId);
+
+    const query = new Builder(store, modelName).selectByProjection(projectionName).build();
+    const queryAdapter = new ODataQueryAdapter(getUrl, store);
+    const fullUrl = queryAdapter.getODataFullUrl(query);
+
+    requestBody += '\r\nGET ' + fullUrl + ' HTTP/1.1\r\n';
+    requestBody += 'Content-Type: application/json;type=entry\r\n';
+    requestBody += 'Prefer: return=representation\r\n';
+
+    const url = `${this._buildURL()}/$batch`;
+
+    const headers = Ember.$.extend({}, this.get('headers'));
+    headers['Content-Type'] = `multipart/mixed;boundary=${boundary}`;
+    const httpMethod = 'POST';
+
+    const options = {
+      method: httpMethod,
+      headers,
+      dataType: 'text',
+      data: requestBody
+    };
+
+    return new Ember.RSVP.Promise((resolve, reject) => Ember.$.ajax(url, options).done((response, statusText, xhr) => {
+      const meta = getResponseMeta(xhr.getResponseHeader('Content-Type'));
+      if (meta.contentType !== 'multipart/mixed') {
+        return reject(new DS.AdapterError('Invalid response type.'));
+      }
+
+      const batchResponses = getBatchResponses(response, meta.boundary).map(parseBatchResponse);
+      const result = batchResponses.filter(r => r.contentType === 'application/http')[0];
+
+      const normalizedRecords = { data: Ember.A(), included: Ember.A() };
+      const record = result.response.body;
+      const normalized = store.normalize(modelName, record);
+
+      // eslint-disable-next-line ember/jquery-ember-run
+      normalizedRecords.data.addObject(normalized.data);
+      if (normalized.included) {
+        normalizedRecords.included.addObjects(normalized.included);
+      }
+
+      let requestResult;
+      Ember.run(() => {
+        requestResult = store.push(normalizedRecords)[0];
+      });
+
+      return resolve(requestResult);
+    }).fail(reject));
+  },
+
+  /**
     A method to generate url part from queryParams.
 
     @method _generateFunctionQueryString

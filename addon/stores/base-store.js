@@ -445,6 +445,32 @@ export default DS.Store.extend({
   },
 
   /**
+    A method to get array of models with batch request.
+
+    @method batchSelect
+    @param {Query} queries Array of Flexberry Query objects.
+    @param {Boolean} [useOnlineStore] Allow to explicitly specify online or offline store using independently of global online status.
+    @return {Promise} A promise that fulfilled with an array of query responses.
+  */
+  batchSelect() {
+    return this._callSuperMethod('batchSelect', 2, arguments);
+  },
+
+  /**
+    A method to get single record with batch request.
+
+    @method batchFindRecord
+    @param {String} modelName Model name.
+    @param {String} modelId Record id.
+    @param {String} projectionName Projection name.
+    @param {Boolean} [useOnlineStore] Allow to explicitly specify online or offline store using independently of global online status.
+    @return {Promise} A promise that fulfilled with single record.
+  */
+  batchFindRecord() {
+    return this._callSuperMethod('batchFindRecord', 3, arguments);
+  },
+
+  /**
     Returns an instance of the adapter for a given type.
     @method adapterFor
     @param {String} modelName

@@ -1,6 +1,9 @@
 # Change Log
 
 ## [Unreleased]
+### Added
+- Store
+    - `batchSelect` and `batchFindRecord` methods for loading data with batch.
 
 ## [2.5.0-beta.8] - 2020-08-25
 ### Added
@@ -34,7 +37,7 @@
     - createExistingRecord method to create record, that exists in backend, without request to it.
 - Syncer service
     - Implemented sync up through batch update when useBatchUpdate flag set to true.
-### Moved 
+### Moved
 - Logic for getting projection for syncing up into syncer service method.
 
 ## [2.5.0-beta.1] - 2020-06-10
