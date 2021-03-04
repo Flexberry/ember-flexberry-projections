@@ -4,6 +4,12 @@ module.exports = function(defaults) {
   var app = new EmberAddon(defaults, {
     'ember-cli-qunit': {
       useLintTree: false
+    },
+
+    nodeAssets: {
+      'jquery-mockjax': {
+        import: ['src/jquery.mockjax.js']
+      }
     }
   });
 
@@ -13,10 +19,6 @@ module.exports = function(defaults) {
     This build file does *not* influence how the addon or the app using it
     behave. You most likely want to be modifying `./index.js` or app's build file
   */
-
-  if (app.env !== 'production') {
-    app.import('bower_components/jquery-mockjax/dist/jquery.mockjax.js');
-  }
 
   return app.toTree();
 };
