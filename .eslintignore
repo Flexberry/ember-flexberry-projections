@@ -69,7 +69,6 @@ addon/utils/string-functions.js
 app/browserify.js
 blueprints/ember-flexberry-data/index.js
 config/release.js
-ember-cli-build.js
 mini-formatter.js
 tests/dummy/app/controllers/suggestion.js
 tests/dummy/app/models/ember-flexberry-dummy-application-user.js
