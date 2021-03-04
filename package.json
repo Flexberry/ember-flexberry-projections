@@ -75,6 +75,7 @@
   "dependencies": {
     "ember-cli-babel": "^5.1.6",
     "ember-cli-htmlbars": "^1.0.3",
+    "ember-cli-node-assets": "^0.2.2",
     "ember-validations": "~2.0.0-alpha.4"
   },
   "resolutions": {
