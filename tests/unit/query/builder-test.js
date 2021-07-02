@@ -226,3 +226,24 @@ test('query builder | offline model', assert => {
   assert.equal(result.expand.author.primaryKeyName, authorPkName);
   assert.equal(result.extend.expand.suggestion.primaryKeyName, suggestionPkName);
 });
+
+test('query builder | null and undefined | byId', assert => {
+  assert.throws(() => new Builder(store, 'Customer').byId(null), Error);
+  assert.throws(() => new Builder(store, 'Customer').byId(undefined), Error);
+});
+
+test('query builder | null and undefined | from', assert => {
+  assert.throws(() => new Builder(store).from(null), Error);
+  assert.throws(() => new Builder(store).from(undefined), Error);
+});
+
+test('query builder | null and undefined | selectByProjection ', assert => {
+  assert.throws(() => new Builder(store, 'Customer').selectByProjection(null), Error);
+  assert.throws(() => new Builder(store, 'Customer').selectByProjection(undefined), Error);
+});
+
+test('query builder | null and undefined | where', assert => {
+  assert.throws(() => new Builder(store, 'Customer').where(undefined), Error);
+  assert.throws(() => new Builder(store, 'Customer').where(null), Error);
+  assert.ok(new Builder(store, 'Customer').where('Name', 'eq', null));
+});
