@@ -1,5 +1,6 @@
 import DS from 'ember-data';
 import { Projection } from 'ember-flexberry-data';
+import Ember from 'ember';
 
 var Model = Projection.Model.extend({
   // Inversed relationship for ember-flexberry-dummy-suggestion-type.localizedTypes.
@@ -9,6 +10,39 @@ var Model = Projection.Model.extend({
     async: false
   }),
   name: DS.attr('string'),
+
+  /**
+    Non-stored property.
+
+    @property detailComputedField
+  */
+  detailComputedField: DS.attr('string'),
+
+  /**
+    Method to set non-stored property.
+    Please, use code below in model class (outside of this mixin) otherwise it will be replaced during regeneration of models.
+    Please, implement 'detailComputedFieldCompute' method in model class (outside of this mixin) if you want to compute value of 'detailComputedField' property.
+
+    @method _detailComputedFieldCompute
+    @private
+    @example
+      ```javascript
+      _detailComputedFieldChanged: on('init', observer('detailComputedField', function() {
+        once(this, '_detailComputedFieldCompute');
+      }))
+      ```
+  */
+
+  _detailComputedFieldCompute: function() {
+    let name = this.get('name');
+    let localizationName = this.get('localization.name');
+    let result = (localizationName) ? name + ':' + localizationName : name;
+    this.set('detailComputedField', result);
+  },
+
+  detailComputedFieldChanged: Ember.on('init', Ember.observer('name', function() {
+    Ember.run.once(this, '_detailComputedFieldCompute');
+  })),
 
   // This property is for flexberry-lookup component. No inverse relationship here.
   localization: DS.belongsTo('ember-flexberry-dummy-localization', {
@@ -35,6 +69,16 @@ Model.defineProjection('LocalizedSuggestionTypeE', 'ember-flexberry-dummy-locali
     })
   }, {
     displayMemberPath: 'name'
+  })
+});
+
+Model.defineProjection('LocalizedSuggestionTypeEWithComputedField', 'ember-flexberry-dummy-localized-suggestion-type', {
+  name: Projection.attr('Name'),
+  detailComputedField: Projection.attr(''),
+  localization: Projection.belongsTo('ember-flexberry-dummy-localization', '', {
+    name: Projection.attr('Name')
+  }),
+  suggestionType: Projection.belongsTo('ember-flexberry-dummy-suggestion-type', '', {
   })
 });
 
