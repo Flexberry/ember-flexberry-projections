@@ -220,6 +220,16 @@ if (config.APP.testODataService) {
     });
   });
 
+  test('sync without data to sync', function(assert) {
+    runTest(App, 1, assert, (store, syncer, done) => {
+      Ember.set(syncer, 'auditEnabled', false);
+      Ember.get(store, 'offlineGlobals').setOnlineAvailable(true);
+      return syncer.syncUp().then((result) => {
+        assert.equal(result, undefined, 'No operation was executed and promise was resolved.');
+      }).finally(done);;
+    });
+  });
+
   test('sync up with server error', function(assert) {
     runTest(App, 2, assert, (store, syncer, done) => {
       // Not cast value and throw error.
