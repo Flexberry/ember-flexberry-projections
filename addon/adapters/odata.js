@@ -646,7 +646,7 @@ export default DS.RESTAdapter.extend({
               normalizedRecords.included.addObjects(normalized.included);
             }
           });
-          msg = store.push(normalizedRecords);
+          Ember.run.join(() => { msg = store.push(normalizedRecords); });
         }
 
         if (!Ember.isNone(successCallback)) {

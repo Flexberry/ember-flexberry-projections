@@ -88,6 +88,7 @@ tests/dummy/app/services/store.js
 tests/dummy/config/environment.js
 tests/helpers/clear-data.js
 tests/integration/display-deep-model-test.js
+tests/integration/adapters/odata-test.js
 tests/integration/services/store-test.js
 tests/integration/services/syncer-test.js
 tests/integration/transforms/decimal-test.js
